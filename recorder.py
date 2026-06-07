@@ -1,16 +1,23 @@
 import os
 import time
+import threading
 from datetime import datetime
+from functools import partial
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
 from dotenv import load_dotenv
 from streamlink import Streamlink
 from streamlink.exceptions import NoPluginError, PluginError
 
+
 load_dotenv()
 
-CHANNEL = f"https://www.twitch.tv/{os.getenv('CHANNEL')}"
+CHANNEL = os.getenv("CHANNEL")
 CHECK_INTERVAL = int(os.getenv("CHECK_INTERVAL", "30"))
 RECORDS_DIR = os.getenv("RECORDS_DIR", "./records")
+
+SERVER_HOST = os.getenv("SERVER_HOST", "0.0.0.0")
+SERVER_PORT = int(os.getenv("PORT", "8080"))
 
 if not CHANNEL:
     raise ValueError("Переменная CHANNEL не задана в .env")
@@ -20,6 +27,10 @@ os.makedirs(RECORDS_DIR, exist_ok=True)
 
 def now() -> str:
     return datetime.now().strftime("%d.%m.%Y %H:%M:%S")
+
+
+def get_channel_name(channel_url: str) -> str:
+    return channel_url.rstrip("/").split("/")[-1]
 
 
 def get_stream(session: Streamlink, channel: str):
@@ -36,10 +47,6 @@ def get_stream(session: Streamlink, channel: str):
     except Exception as e:
         print(f"[{now()}] Ошибка проверки стрима: {e}")
         return None
-
-
-def get_channel_name(channel_url: str) -> str:
-    return channel_url.rstrip("/").split("/")[-1]
 
 
 def record_stream(stream, channel: str):
@@ -65,7 +72,33 @@ def record_stream(stream, channel: str):
     return filename
 
 
+def start_file_server():
+    handler = partial(
+        SimpleHTTPRequestHandler,
+        directory=RECORDS_DIR
+    )
+
+    server = ThreadingHTTPServer(
+        (SERVER_HOST, SERVER_PORT),
+        handler
+    )
+
+    print(
+        f"[{now()}] HTTP-сервер запущен: "
+        f"http://{SERVER_HOST}:{SERVER_PORT}"
+    )
+    print(f"[{now()}] Раздаваемая папка: {RECORDS_DIR}")
+
+    server.serve_forever()
+
+
 def main():
+    server_thread = threading.Thread(
+        target=start_file_server,
+        daemon=True
+    )
+    server_thread.start()
+
     session = Streamlink()
 
     print("Ожидание начала трансляции...")
