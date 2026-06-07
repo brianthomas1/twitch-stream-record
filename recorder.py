@@ -8,7 +8,7 @@ from streamlink.exceptions import NoPluginError, PluginError
 
 load_dotenv()
 
-CHANNEL = os.getenv("CHANNEL")
+CHANNEL = f"https://www.twitch.tv/{os.getenv('CHANNEL')}"
 CHECK_INTERVAL = int(os.getenv("CHECK_INTERVAL", "30"))
 RECORDS_DIR = os.getenv("RECORDS_DIR", "./records")
 
