@@ -19,7 +19,6 @@ CHECK_INTERVAL = int(os.getenv("CHECK_INTERVAL", "30"))
 RECORDS_DIR = os.getenv("RECORDS_DIR", "./records")
 
 HTTP_SERVER_ENABLED = os.getenv("HTTP_SERVER_ENABLED", "true").lower() in (
-    "1",
     "true",
     "yes",
     "on",
