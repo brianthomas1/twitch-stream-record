@@ -13,6 +13,8 @@ from streamlink.exceptions import NoPluginError, PluginError
 load_dotenv()
 
 CHANNEL = os.getenv("CHANNEL")
+QUALITY = os.getenv("QUALITY", "best")
+
 CHECK_INTERVAL = int(os.getenv("CHECK_INTERVAL", "30"))
 RECORDS_DIR = os.getenv("RECORDS_DIR", "./records")
 
@@ -39,6 +41,14 @@ def get_stream(session: Streamlink, channel: str):
 
         if not streams:
             return None
+
+        if QUALITY in streams:
+            return streams[QUALITY]
+
+        print(
+            f"[{now()}] Качество '{QUALITY}' недоступно. "
+            f"Доступно: {', '.join(streams.keys())}"
+        )
 
         return streams.get("best")
 
