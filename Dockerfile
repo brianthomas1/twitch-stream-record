@@ -13,6 +13,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY recorder.py .
 
-VOLUME ["/records"]
-
 CMD ["python", "recorder.py"]
