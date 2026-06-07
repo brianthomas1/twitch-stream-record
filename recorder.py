@@ -35,7 +35,6 @@ os.makedirs(RECORDS_DIR, exist_ok=True)
 
 app = FastAPI()
 
-
 @app.get("/", response_class=HTMLResponse)
 def index():
     items = []
@@ -43,9 +42,9 @@ def index():
     for filename in sorted(os.listdir(RECORDS_DIR), reverse=True):
         path = os.path.join(RECORDS_DIR, filename)
 
-        if os.path.isfile(path):
+        if os.path.isfile(path) and filename.lower().endswith((".mp4", ".ts")):
             items.append(
-                f'<li><a href="/files/{filename}" target="_blank">{filename}</a></li>'
+                f'<li><a href="/watch/{filename}">{filename}</a></li>'
             )
 
     return f"""
@@ -65,6 +64,33 @@ def index():
     """
 
 
+@app.get("/watch/{filename}", response_class=HTMLResponse)
+def watch_file(filename: str):
+    return f"""
+    <!doctype html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <title>{filename}</title>
+    </head>
+    <body>
+        <h1>{filename}</h1>
+
+        <video
+            src="/files/{filename}"
+            controls
+            preload="metadata"
+            style="width: 100%; max-width: 1200px;"
+        ></video>
+
+        <p>
+            <a href="/">Назад к списку</a>
+        </p>
+    </body>
+    </html>
+    """
+
+
 @app.get("/files/{filename}")
 def get_file(filename: str):
     records_dir = os.path.abspath(RECORDS_DIR)
@@ -76,12 +102,18 @@ def get_file(filename: str):
     if not os.path.isfile(path):
         raise HTTPException(status_code=404, detail="File not found")
 
-    media_type = "video/mp4" if filename.lower().endswith(".mp4") else "video/mp2t"
+    lower_name = filename.lower()
+
+    if lower_name.endswith(".mp4"):
+        media_type = "video/mp4"
+    elif lower_name.endswith(".ts"):
+        media_type = "video/mp2t"
+    else:
+        media_type = "application/octet-stream"
 
     return FileResponse(
         path,
         media_type=media_type,
-        filename=filename,
     )
 
 
