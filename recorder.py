@@ -2,8 +2,9 @@ import os
 import time
 import threading
 from datetime import datetime
-from functools import partial
-from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+import uvicorn
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse, HTMLResponse
 
 from dotenv import load_dotenv
 from streamlink import Streamlink
@@ -31,6 +32,69 @@ if not CHANNEL:
     raise ValueError("Переменная CHANNEL не задана в .env")
 
 os.makedirs(RECORDS_DIR, exist_ok=True)
+
+app = FastAPI()
+
+
+@app.get("/", response_class=HTMLResponse)
+def index():
+    items = []
+
+    for filename in sorted(os.listdir(RECORDS_DIR), reverse=True):
+        path = os.path.join(RECORDS_DIR, filename)
+
+        if os.path.isfile(path):
+            items.append(
+                f'<li><a href="/files/{filename}" target="_blank">{filename}</a></li>'
+            )
+
+    return f"""
+    <!doctype html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <title>Records</title>
+    </head>
+    <body>
+        <h1>Records</h1>
+        <ul>
+            {''.join(items)}
+        </ul>
+    </body>
+    </html>
+    """
+
+
+@app.get("/files/{filename}")
+def get_file(filename: str):
+    records_dir = os.path.abspath(RECORDS_DIR)
+    path = os.path.abspath(os.path.join(records_dir, filename))
+
+    if not path.startswith(records_dir + os.sep):
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    if not os.path.isfile(path):
+        raise HTTPException(status_code=404, detail="File not found")
+
+    media_type = "video/mp4" if filename.lower().endswith(".mp4") else "video/mp2t"
+
+    return FileResponse(
+        path,
+        media_type=media_type,
+        filename=filename,
+    )
+
+
+def start_file_server():
+    print(f"[{now()}] HTTP-сервер запущен: http://{SERVER_HOST}:{SERVER_PORT}")
+    print(f"[{now()}] Раздаваемая папка: {RECORDS_DIR}")
+
+    uvicorn.run(
+        app,
+        host=SERVER_HOST,
+        port=SERVER_PORT,
+        log_level="warning",
+    )
 
 
 def now() -> str:
