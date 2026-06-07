@@ -151,27 +151,6 @@ def record_stream(stream, channel: str):
 
     return filename
 
-
-def start_file_server():
-    handler = partial(
-        SimpleHTTPRequestHandler,
-        directory=RECORDS_DIR,
-    )
-
-    server = ThreadingHTTPServer(
-        (SERVER_HOST, SERVER_PORT),
-        handler,
-    )
-
-    print(
-        f"[{now()}] HTTP-сервер запущен: "
-        f"http://{SERVER_HOST}:{SERVER_PORT}"
-    )
-    print(f"[{now()}] Раздаваемая папка: {RECORDS_DIR}")
-
-    server.serve_forever()
-
-
 def main():
     if HTTP_SERVER_ENABLED:
         server_thread = threading.Thread(
