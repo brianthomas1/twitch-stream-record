@@ -14,9 +14,16 @@ load_dotenv()
 
 CHANNEL = os.getenv("CHANNEL")
 QUALITY = os.getenv("QUALITY", "best")
-
 CHECK_INTERVAL = int(os.getenv("CHECK_INTERVAL", "30"))
+
 RECORDS_DIR = os.getenv("RECORDS_DIR", "./records")
+
+HTTP_SERVER_ENABLED = os.getenv("HTTP_SERVER_ENABLED", "true").lower() in (
+    "1",
+    "true",
+    "yes",
+    "on",
+)
 
 SERVER_HOST = os.getenv("SERVER_HOST", "0.0.0.0")
 SERVER_PORT = int(os.getenv("PORT", "8080"))
@@ -65,7 +72,7 @@ def record_stream(stream, channel: str):
     filename_time = datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
     filename = os.path.join(
         RECORDS_DIR,
-        f"{channel_name}_{filename_time}.ts"
+        f"{channel_name}_{filename_time}_{QUALITY}.ts"
     )
 
     print(f"[{now()}] Запись в файл: {filename}")
@@ -85,12 +92,12 @@ def record_stream(stream, channel: str):
 def start_file_server():
     handler = partial(
         SimpleHTTPRequestHandler,
-        directory=RECORDS_DIR
+        directory=RECORDS_DIR,
     )
 
     server = ThreadingHTTPServer(
         (SERVER_HOST, SERVER_PORT),
-        handler
+        handler,
     )
 
     print(
@@ -103,17 +110,22 @@ def start_file_server():
 
 
 def main():
-    server_thread = threading.Thread(
-        target=start_file_server,
-        daemon=True
-    )
-    server_thread.start()
+    if HTTP_SERVER_ENABLED:
+        server_thread = threading.Thread(
+            target=start_file_server,
+            daemon=True,
+        )
+        server_thread.start()
+    else:
+        print(f"[{now()}] HTTP-сервер отключен")
 
     session = Streamlink()
 
     print("Ожидание начала трансляции...")
-    print(f"Канал: {CHANNEL}\nКачество: {QUALITY}")
-    print(f"Каталог записей: {RECORDS_DIR}\n")
+    print(f"Канал: {CHANNEL}")
+    print(f"Качество: {QUALITY}")
+    print(f"Каталог записей: {RECORDS_DIR}")
+    print()
 
     while True:
         stream = get_stream(session, CHANNEL)
