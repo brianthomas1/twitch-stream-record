@@ -4,7 +4,7 @@ from streamlink import Streamlink
 from streamlink.exceptions import NoPluginError, PluginError
 
 
-CHANNEL = "https://www.twitch.tv/name"
+CHANNEL = "https://www.twitch.tv/nats"
 CHECK_INTERVAL = 30
 
 
