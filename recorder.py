@@ -164,11 +164,7 @@ def main():
     session = Streamlink()
 
     print("Ожидание начала трансляции...")
-    print(f"Канал: {CHANNEL}")
-    print(f"Качество: {QUALITY}")
-    print(f"Каталог записей: {RECORDS_DIR}")
-    print()
-
+    print(f"Канал: {CHANNEL}\nКачество: {QUALITY}\nКаталог записей: {RECORDS_DIR}")
     while True:
         stream = get_stream(session, CHANNEL)
 
