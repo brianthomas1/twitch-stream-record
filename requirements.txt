@@ -1,2 +1,4 @@
 streamlink
 python-dotenv
+fastapi
+uvicorn
