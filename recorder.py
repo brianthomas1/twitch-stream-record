@@ -39,9 +39,7 @@ def index():
         path = os.path.join(RECORDS_DIR, filename)
 
         if os.path.isfile(path) and filename.lower().endswith((".mp4", ".ts")):
-            items.append(
-                f'<li><a href="/watch/{filename}">{filename}</a></li>'
-            )
+            items.append(f'<li><a href="/watch/{filename}">{filename}</a></li>')
 
     return f"""
     <!doctype html>
@@ -208,8 +206,7 @@ def main():
 
             print(f"[{now()}] Ожидание следующего стрима...")
         else:
-            print(
-                f"[{now()}] Стрим еще не начался. "
+            print(f"[{now()}] Стрим еще не начался. "
                 f"Проверка через {CHECK_INTERVAL} сек."
             )
 
