@@ -7,7 +7,7 @@ CHANNEL=https://www.twitch.tv/name
 QUALITY=best
 CHECK_INTERVAL=30
 
-RECORDS_DIR=/data
+RECORDS_DIR=./records
 
 HTTP_SERVER_ENABLED=false
 SERVER_HOST=0.0.0.0
