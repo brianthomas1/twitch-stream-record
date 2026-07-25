@@ -19,11 +19,7 @@ CHECK_INTERVAL = int(os.getenv("CHECK_INTERVAL", "30"))
 
 RECORDS_DIR = os.getenv("RECORDS_DIR", "./records")
 
-HTTP_SERVER_ENABLED = os.getenv("HTTP_SERVER_ENABLED", "true").lower() in (
-    "true",
-    "yes",
-    "on",
-)
+HTTP_SERVER_ENABLED = os.getenv("HTTP_SERVER_ENABLED", "true").lower() in ("true", "yes", "on")
 
 SERVER_HOST = os.getenv("SERVER_HOST", "0.0.0.0")
 SERVER_PORT = int(os.getenv("PORT", "8080"))
@@ -85,6 +81,7 @@ def watch_file(filename: str):
 
         <p>
             <a href="/">Назад к списку</a>
+            <a href="/files/{filename}" style="margin-left: 10px;" target="_blank">Файл</a>
         </p>
     </body>
     </html>
