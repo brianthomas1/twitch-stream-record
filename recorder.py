@@ -1,15 +1,14 @@
 import os
 import time
 import threading
-from datetime import datetime
 import uvicorn
+from datetime import datetime
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse
 
 from dotenv import load_dotenv
 from streamlink import Streamlink
 from streamlink.exceptions import NoPluginError, PluginError
-
 
 load_dotenv()
 
@@ -38,8 +37,8 @@ def index():
     for filename in sorted(os.listdir(RECORDS_DIR), reverse=True):
         path = os.path.join(RECORDS_DIR, filename)
 
-        if os.path.isfile(path) and filename.lower().endswith((".mp4", ".ts")):
-            items.append(f'<li><a href="/watch/{filename}">{filename}</a></li>')
+        if os.path.isfile(path) and filename.lower().endswith((".mp4", ".ts", ".webm")):
+            items.append(f'<li><a href="/watch/{filename}">{filename}</a><a href="/files/{filename}" style="margin-left: 15px;" target="_blank">Файл</a></li>')
 
     return f"""
     <!doctype html>
@@ -66,21 +65,55 @@ def watch_file(filename: str):
     <head>
         <meta charset="utf-8">
         <title>{filename}</title>
+        <style>
+            body {{
+                margin: 0;
+                font-family: Arial, sans-serif;
+                display: flex;
+                justify-content: center;
+                min-height: 100vh;
+                background: #0e0e10;
+                color: #efeff1;
+            }}
+
+            .container {{
+                width: 100%;
+                max-width: 1200px;
+                text-align: center;
+                padding: 20px;
+            }}
+
+            video {{
+                width: 100%;
+                max-width: 1200px;
+            }}
+
+            .links {{
+                margin-top: 15px;
+            }}
+
+            .links a {{
+                font-family: Arial, sans-serif;
+                color: #efeff1;
+                margin: 0 10px;
+            }}
+        </style>
     </head>
     <body>
-        <h1>{filename}</h1>
+        <div class="container">
+            <h1>{filename}</h1>
 
-        <video
-            src="/files/{filename}"
-            controls
-            preload="metadata"
-            style="width: 100%; max-width: 1200px;"
-        ></video>
+            <video
+                src="/files/{filename}"
+                controls
+                preload="metadata"
+            ></video>
 
-        <p>
-            <a href="/">Назад к списку</a>
-            <a href="/files/{filename}" style="margin-left: 10px;" target="_blank">Файл</a>
-        </p>
+            <div class="links">
+                <a href="/">Назад к списку</a>
+                <a href="/files/{filename}" target="_blank">Файл</a>
+            </div>
+        </div>
     </body>
     </html>
     """
@@ -99,29 +132,25 @@ def get_file(filename: str):
 
     lower_name = filename.lower()
 
+    # import mimetypes
+    # media_type = mimetypes.guess_type(path)[0]
     if lower_name.endswith(".mp4"):
         media_type = "video/mp4"
     elif lower_name.endswith(".ts"):
         media_type = "video/mp2t"
+    elif lower_name.endswith(".webm"):
+        media_type = "video/webm"
     else:
         media_type = "application/octet-stream"
 
-    return FileResponse(
-        path,
-        media_type=media_type,
-    )
+    return FileResponse(path, media_type=media_type)
 
 
 def start_file_server():
     print(f"[{now()}] HTTP-сервер запущен: http://{SERVER_HOST}:{SERVER_PORT}")
     print(f"[{now()}] Раздаваемая папка: {RECORDS_DIR}")
 
-    uvicorn.run(
-        app,
-        host=SERVER_HOST,
-        port=SERVER_PORT,
-        log_level="warning",
-    )
+    uvicorn.run(app, host=SERVER_HOST, port=SERVER_PORT, log_level="warning")
 
 
 def now() -> str:
@@ -160,10 +189,7 @@ def record_stream(stream, channel: str):
     channel_name = get_channel_name(channel)
 
     filename_time = datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
-    filename = os.path.join(
-        RECORDS_DIR,
-        f"{channel_name}_{filename_time}_{QUALITY}.ts"
-    )
+    filename = os.path.join(RECORDS_DIR, f"{channel_name}_{filename_time}_{QUALITY}.ts")
 
     print(f"[{now()}] Запись в файл: {filename}")
 
@@ -180,10 +206,7 @@ def record_stream(stream, channel: str):
 
 def main():
     if HTTP_SERVER_ENABLED:
-        server_thread = threading.Thread(
-            target=start_file_server,
-            daemon=True,
-        )
+        server_thread = threading.Thread(target=start_file_server, daemon=True,)
         server_thread.start()
     else:
         print(f"[{now()}] HTTP-сервер отключен")
@@ -206,9 +229,7 @@ def main():
 
             print(f"[{now()}] Ожидание следующего стрима...")
         else:
-            print(f"[{now()}] Стрим еще не начался. "
-                f"Проверка через {CHECK_INTERVAL} сек."
-            )
+            print(f"[{now()}] Стрим еще не начался. Проверка через {CHECK_INTERVAL} сек.")
 
         time.sleep(CHECK_INTERVAL)
 
